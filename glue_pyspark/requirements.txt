@@ -1,0 +1,26 @@
+# Core PySpark (provided by AWS Glue runtime)
+# pyspark==3.3.0  # Provided by Glue 4.0
+
+# AWS SDK
+boto3>=1.26.0
+botocore>=1.29.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.1
+moto>=4.1.0
+
+# Data validation
+pydantic>=2.0.0
+
+# Configuration
+PyYAML>=6.0
+
+# Utilities
+python-dateutil>=2.8.2
+
+# Development
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.4.0

@@ -1,0 +1,107 @@
+# AWS Glue Job Parameters Configuration
+# This file defines all configurable parameters for the customer order analytics job
+
+job_config:
+  job_name: "customer_order_analytics_scd2"
+  glue_version: "4.0"
+  worker_type: "G.1X"
+  number_of_workers: 10
+  timeout: 2880  # 48 hours in minutes
+  max_retries: 1
+
+# Data Source Paths (from TRD)
+data_sources:
+  customer_input_path: "s3://adif-sdlc/sdlc_wizard/customerdata/"
+  order_input_path: "s3://adif-sdlc/sdlc_wizard/orderdata/"
+
+# Output Paths (from TRD)
+data_outputs:
+  order_summary_output_path: "s3://adif-sdlc/curated/sdlc_wizard/ordersummary/"
+  customer_aggregate_output_path: "s3://adif-sdlc/analytics/customeraggregatespend/"
+
+# AWS Glue Catalog Configuration
+glue_catalog:
+  database_name: "sdlc_wizard_db"
+  order_summary_table: "order_summary"
+  customer_aggregate_table: "customer_aggregate_spend"
+
+# Schema Definitions (from TRD)
+schemas:
+  customer:
+    - name: "custid"
+      type: "string"
+    - name: "name"
+      type: "string"
+    - name: "emailid"
+      type: "string"
+    - name: "region"
+      type: "string"
+
+  order:
+    - name: "orderid"
+      type: "string"
+    - name: "itemname"
+      type: "string"
+    - name: "priceperunit"
+      type: "double"
+    - name: "qty"
+      type: "integer"
+    - name: "date"
+      type: "string"
+
+# SCD Type 2 Configuration (from TRD)
+scd_type2:
+  enabled: true
+  record_key_field: "custid"
+  precombine_field: "opts"
+  partition_field: "region"
+  table_name: "customer_dimension_hudi"
+  operation: "upsert"
+
+  # SCD Type 2 Columns
+  columns:
+    is_active: "isactive"
+    start_date: "startdate"
+    end_date: "enddate"
+    operation_timestamp: "opts"
+
+# Hudi Configuration
+hudi_config:
+  hoodie.table.name: "customer_dimension"
+  hoodie.datasource.write.recordkey.field: "custid"
+  hoodie.datasource.write.precombine.field: "opts"
+  hoodie.datasource.write.partitionpath.field: "region"
+  hoodie.datasource.write.operation: "upsert"
+  hoodie.datasource.write.table.type: "COPY_ON_WRITE"
+  hoodie.datasource.write.hive_style_partitioning: "true"
+  hoodie.upsert.shuffle.parallelism: "20"
+  hoodie.insert.shuffle.parallelism: "20"
+
+# Data Cleaning Rules (from TRD)
+data_cleaning:
+  remove_nulls: true
+  remove_null_strings: true  # Remove 'Null' as string
+  remove_duplicates: true
+  null_string_values:
+    - "Null"
+    - "NULL"
+    - "null"
+    - ""
+
+# Spark Configuration
+spark_config:
+  spark.serializer: "org.apache.spark.serializer.KryoSerializer"
+  spark.sql.hive.convertMetastoreParquet: "false"
+  spark.sql.adaptive.enabled: "true"
+  spark.sql.adaptive.coalescePartitions.enabled: "true"
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Validation Rules
+validation:
+  check_s3_access: true
+  check_empty_dataframes: true
+  min_records_threshold: 1
